@@ -1,0 +1,41 @@
+# ======================================================
+# SASTGuard backend - core runtime dependencies
+# Install inside a project virtual environment, e.g.:
+#   python -m venv .venv
+#   .venv/Scripts/python -m pip install -r backend/requirements.txt   (Windows)
+#   .venv/bin/python     -m pip install -r backend/requirements.txt   (Linux/macOS)
+# ======================================================
+
+# Web / API
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+pydantic==2.6.3
+pydantic-settings==2.2.1
+
+# Database
+sqlalchemy==2.0.28
+
+# Async processing
+celery==5.3.6
+redis==5.0.1
+
+# SAST tools (native engine has no external dep; bandit is pure-python)
+bandit==1.7.8
+
+# HTTP client (Ollama + requests)
+httpx==0.27.0
+requests==2.31.0
+
+# Utilities
+PyYAML==6.0.1
+jinja2==3.1.3
+
+# Testing
+pytest==8.1.1
+pytest-asyncio==0.23.5
+
+# NOTE:
+# - psycopg2-binary is only needed when using PostgreSQL (Docker). It is listed
+#   in requirements-postgres.txt to avoid build issues on local SQLite dev.
+# - semgrep is heavy and is run inside Docker/CI. See requirements-sast.txt.

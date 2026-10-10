@@ -1,0 +1,68 @@
+name: SASTGuard Security Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  security:
+    name: Tests + SAST + Security Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-sast.txt   # bandit + semgrep
+
+      - name: Run tests
+        working-directory: backend
+        run: pytest -q
+
+      - name: Run SASTGuard scan + generate reports
+        id: scan
+        working-directory: backend
+        continue-on-error: true   # don't stop before uploading artifacts
+        run: |
+          python -m app.cli scan ../vulnerable_samples \
+            --gate \
+            --json ../sast-report.json \
+            --html ../sast-report.html \
+            --sarif ../sast-report.sarif
+          echo "gate_exit=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload SAST reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-reports
+          path: |
+            sast-report.json
+            sast-report.html
+            sast-report.sarif
+          if-no-files-found: warn
+
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: sast-report.sarif
+
+      - name: Enforce Security Gate
+        if: steps.scan.outputs.gate_exit != '0'
+        run: |
+          echo "::error::Security Gate failed (exit ${{ steps.scan.outputs.gate_exit }})"
+          exit 1

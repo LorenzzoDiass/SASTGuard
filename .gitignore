@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+*.db
+*.sqlite3
+
+# Env / secrets
+.env
+*.pem
+*.key
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# Data / uploads / reports
+data/
+uploads/
+*.log
+sast-report.json
+sast-report.html
+sast-report.sarif
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

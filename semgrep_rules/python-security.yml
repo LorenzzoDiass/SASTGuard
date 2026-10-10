@@ -1,0 +1,113 @@
+rules:
+  - id: sastguard-eval-detected
+    languages: [python]
+    severity: ERROR
+    message: >
+      Use of eval() can lead to arbitrary code execution (RCE) when the input
+      is attacker-controlled.
+    metadata:
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+      owasp: "A03:2021 - Injection"
+      references:
+        - https://docs.python.org/3/library/functions.html#eval
+    patterns:
+      - pattern: eval(...)
+
+  - id: sastguard-exec-detected
+    languages: [python]
+    severity: ERROR
+    message: Use of exec() runs arbitrary Python statements and can lead to RCE.
+    metadata:
+      cwe: "CWE-95"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern: exec(...)
+
+  - id: sastguard-os-system
+    languages: [python]
+    severity: ERROR
+    message: os.system() invokes a shell and is vulnerable to command injection.
+    metadata:
+      cwe: "CWE-78"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern: os.system(...)
+
+  - id: sastguard-subprocess-shell-true
+    languages: [python]
+    severity: ERROR
+    message: subprocess called with shell=True is vulnerable to command injection.
+    metadata:
+      cwe: "CWE-78"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run(..., shell=True, ...)
+          - pattern: subprocess.call(..., shell=True, ...)
+          - pattern: subprocess.Popen(..., shell=True, ...)
+          - pattern: subprocess.check_output(..., shell=True, ...)
+
+  - id: sastguard-insecure-hash-md5
+    languages: [python]
+    severity: WARNING
+    message: MD5 is a weak hash algorithm and must not be used for security.
+    metadata:
+      cwe: "CWE-327"
+      owasp: "A02:2021 - Cryptographic Failures"
+    patterns:
+      - pattern: hashlib.md5(...)
+
+  - id: sastguard-insecure-hash-sha1
+    languages: [python]
+    severity: WARNING
+    message: SHA1 is a weak hash algorithm and must not be used for security.
+    metadata:
+      cwe: "CWE-327"
+      owasp: "A02:2021 - Cryptographic Failures"
+    patterns:
+      - pattern: hashlib.sha1(...)
+
+  - id: sastguard-insecure-pickle
+    languages: [python]
+    severity: ERROR
+    message: Deserializing untrusted data with pickle can lead to RCE.
+    metadata:
+      cwe: "CWE-502"
+      owasp: "A08:2021 - Software and Data Integrity Failures"
+    patterns:
+      - pattern-either:
+          - pattern: pickle.load(...)
+          - pattern: pickle.loads(...)
+
+  - id: sastguard-yaml-load-unsafe
+    languages: [python]
+    severity: ERROR
+    message: yaml.load without SafeLoader can construct arbitrary objects.
+    metadata:
+      cwe: "CWE-502"
+      owasp: "A08:2021 - Software and Data Integrity Failures"
+    patterns:
+      - pattern: yaml.load($X)
+
+  - id: sastguard-requests-no-verify
+    languages: [python]
+    severity: WARNING
+    message: Disabling TLS certificate verification (verify=False) enables MITM.
+    metadata:
+      cwe: "CWE-295"
+      owasp: "A05:2021 - Security Misconfiguration"
+    patterns:
+      - pattern-either:
+          - pattern: requests.get(..., verify=False, ...)
+          - pattern: requests.post(..., verify=False, ...)
+          - pattern: requests.request(..., verify=False, ...)
+
+  - id: sastguard-flask-debug-true
+    languages: [python]
+    severity: ERROR
+    message: Running Flask with debug=True exposes the Werkzeug console (RCE).
+    metadata:
+      cwe: "CWE-489"
+      owasp: "A05:2021 - Security Misconfiguration"
+    patterns:
+      - pattern: $APP.run(..., debug=True, ...)

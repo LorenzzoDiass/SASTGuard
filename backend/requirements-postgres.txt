@@ -1,0 +1,3 @@
+# PostgreSQL driver - installed in the Docker image / CI only.
+# Local development defaults to SQLite and does not need this.
+psycopg2-binary==2.9.9

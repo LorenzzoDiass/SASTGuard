@@ -1,0 +1,112 @@
+# ======================================================
+# SASTGuard - full stack. Bring everything up with:
+#     docker compose up --build
+# Services: frontend, backend (API), worker (Celery), postgres, redis, ollama.
+# ======================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sastguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_DB: ${POSTGRES_DB:-sastguard}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sastguard}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [sastnet]
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [sastnet]
+
+  ollama:
+    image: ollama/ollama:latest
+    # The model is pulled on first use. To pre-pull run:
+    #   docker compose exec ollama ollama pull llama3
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks: [sastnet]
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sastguard}:${POSTGRES_PASSWORD:-change_me_in_production}@postgres:5432/${POSTGRES_DB:-sastguard}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OLLAMA_ENABLED: "true"
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
+      # Mount the sample project read-only so it can be scanned from the UI.
+      - ./vulnerable_samples:/app/vulnerable_samples:ro
+      - ./semgrep_rules:/app/semgrep_rules:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [sastnet]
+
+  worker:
+    build: ./backend
+    command: celery -A app.workers.celery_app.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-sastguard}:${POSTGRES_PASSWORD:-change_me_in_production}@postgres:5432/${POSTGRES_DB:-sastguard}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OLLAMA_ENABLED: "true"
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
+      - ./vulnerable_samples:/app/vulnerable_samples:ro
+      - ./semgrep_rules:/app/semgrep_rules:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [sastnet]
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [sastnet]
+
+volumes:
+  pgdata:
+  uploads:
+  ollama:
+
+networks:
+  sastnet:
+    driver: bridge

@@ -1,0 +1,30 @@
+rules:
+  - id: sastguard-sql-string-format
+    languages: [python]
+    severity: ERROR
+    message: >
+      SQL query built with string formatting/concatenation and passed to
+      execute() is vulnerable to SQL injection. Use parameterized queries.
+    metadata:
+      cwe: "CWE-89"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: $CUR.execute("..." % ...)
+          - pattern: $CUR.execute("..." + ...)
+          - pattern: $CUR.execute(f"...{...}...")
+          - pattern: $CUR.execute("...".format(...))
+
+  - id: sastguard-path-open-tainted
+    languages: [python]
+    severity: WARNING
+    message: >
+      Opening a file using a request-derived path without validation can lead
+      to path traversal. Validate against an allow-listed base directory.
+    metadata:
+      cwe: "CWE-22"
+      owasp: "A01:2021 - Broken Access Control"
+    patterns:
+      - pattern-either:
+          - pattern: open(request.args.get(...))
+          - pattern: open(request.form.get(...))
