@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3"
     ollama_timeout: int = 60
 
+        # AI provider
+    ai_provider: str = "ollama"
+
+    # Groq API
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
+    groq_timeout: int = 60
+
     # Uploads
     upload_max_bytes: int = 20 * 1024 * 1024
     upload_dir: str = "./data/uploads"
