@@ -1,3 +1,4 @@
+
 """AI analyzer: turns a detected finding into an enriched, structured review.
 
 Pipeline position:
@@ -5,19 +6,18 @@ Pipeline position:
     AI returns JSON (severity, false-positive, explanation, remediation,
     fixed_code).
 
-If Ollama is disabled or unreachable, :meth:`analyze` returns a result marked
-``available=False`` with explanation "AI analysis unavailable". The platform
-keeps the deterministic analysis intact (original_severity is always preserved
-by the caller).
+If the configured AI provider is disabled or unreachable, analyze returns
+available=False. The deterministic SAST analysis remains intact.
 """
 from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from ai.ollama_client import OllamaClient
+from ai.groq_client import GroqClient
 from ai.prompts import SYSTEM_PROMPT, build_user_prompt
 from app.core.config import settings
 from app.core.enums import Severity
@@ -52,23 +52,42 @@ class AIResult:
 
 
 class AIAnalyzer:
-    def __init__(self, client: Optional[OllamaClient] = None):
-        self.client = client or OllamaClient()
+    def __init__(self, client=None):
+        if client is not None:
+            self.client = client
+        elif settings.ai_provider.lower() == "groq":
+            self.client = GroqClient()
+        else:
+            self.client = OllamaClient()
 
     def analyze(self, finding: dict) -> AIResult:
-        """Analyze a finding dict. Always returns an AIResult (never raises)."""
-        if not settings.ollama_enabled:
-            return AIResult(available=False, explanation="AI analysis unavailable")
+        """Analyze a finding dict. Always returns an AIResult."""
+        if (
+            settings.ai_provider.lower() != "groq"
+            and not settings.ollama_enabled
+        ):
+            return AIResult(
+                available=False,
+                explanation="AI analysis unavailable",
+            )
 
         if not self.client.is_available():
-            return AIResult(available=False, explanation="AI analysis unavailable")
+            return AIResult(
+                available=False,
+                explanation="AI analysis unavailable",
+            )
 
         prompt = build_user_prompt(finding)
         raw = self.client.generate(SYSTEM_PROMPT, prompt)
+
         if not raw:
-            return AIResult(available=False, explanation="AI analysis unavailable")
+            return AIResult(
+                available=False,
+                explanation="AI analysis unavailable",
+            )
 
         parsed = _safe_parse_json(raw)
+
         if parsed is None:
             return AIResult(
                 available=False,
@@ -79,11 +98,14 @@ class AIAnalyzer:
 
     def _to_result(self, data: dict) -> AIResult:
         severity = str(data.get("severity", "")).upper().strip()
+
         if severity not in _VALID_SEVERITIES:
             severity = None
 
         confidence = _coerce_float(data.get("confidence"))
+
         fp = data.get("possible_false_positive")
+
         if isinstance(fp, str):
             fp = fp.strip().lower() in ("true", "yes", "1")
 
@@ -109,9 +131,9 @@ def _coerce_float(value) -> Optional[float]:
 
 
 def _safe_parse_json(text: str) -> Optional[dict]:
-    """Parse JSON from a model response, tolerating code fences / surrounding text."""
+    """Parse JSON, tolerating code fences and surrounding text."""
     text = text.strip()
-    # Try direct parse first.
+
     try:
         obj = json.loads(text)
         if isinstance(obj, dict):
@@ -119,16 +141,22 @@ def _safe_parse_json(text: str) -> Optional[dict]:
     except json.JSONDecodeError:
         pass
 
-    # Strip markdown fences if present.
-    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    fenced = re.search(
+        r"```(?:json)?\s*(\{.*?\})\s*```",
+        text,
+        re.DOTALL,
+    )
+
     if fenced:
         try:
-            return json.loads(fenced.group(1))
+            obj = json.loads(fenced.group(1))
+            if isinstance(obj, dict):
+                return obj
         except json.JSONDecodeError:
             pass
 
-    # Grab the first {...} block.
     brace = re.search(r"\{.*\}", text, re.DOTALL)
+
     if brace:
         try:
             obj = json.loads(brace.group(0))
@@ -136,4 +164,5 @@ def _safe_parse_json(text: str) -> Optional[dict]:
                 return obj
         except json.JSONDecodeError:
             pass
+
     return None
