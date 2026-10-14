@@ -35,4 +35,4 @@ EXPOSE 8000
 # Default command runs the API; the worker service overrides this in compose.
 # Shell form so $PORT (injected by Render and similar PaaS) is honoured, with a
 # default of 8000 for local/compose use.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
