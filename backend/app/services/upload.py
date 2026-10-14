@@ -1,7 +1,10 @@
-"""Secure handling of uploaded Python code / project archives.
+"""Secure handling of uploaded source code / project archives.
+
+Supported source languages: Python (.py), JavaScript/TypeScript
+(.js/.jsx/.mjs/.cjs/.ts/.tsx) and Java (.java), plus .zip for whole projects.
 
 Protections implemented:
-- extension allow-list (.py, .zip)
+- extension allow-list (driven by settings.allowed_extensions)
 - maximum total size enforcement
 - path traversal / absolute path rejection on extracted names
 - Zip Slip prevention (every member must resolve inside the target dir)
@@ -39,6 +42,16 @@ def _ext_ok(filename: str) -> bool:
     return ext in settings.allowed_extensions_list
 
 
+def _source_extensions() -> set:
+    """Scannable source extensions (everything allowed except the archive).
+
+    Driven by ``settings.allowed_extensions`` so configuration stays the single
+    source of truth. These are the file types extracted from a .zip and the
+    types accepted as a direct single-file upload.
+    """
+    return {e for e in settings.allowed_extensions_list if e != ".zip"}
+
+
 def _safe_join(base: str, *paths: str) -> str:
     """Join and ensure the result stays within base (anti path-traversal)."""
     base_real = os.path.realpath(base)
@@ -69,7 +82,7 @@ def store_upload(filename: str, content: bytes, upload_root: str = None) -> Stor
     os.makedirs(scan_dir, exist_ok=True)
 
     ext = os.path.splitext(filename.lower())[1]
-    if ext == ".py":
+    if ext in _source_extensions():
         safe_name = os.path.basename(filename)
         dest = _safe_join(scan_dir, safe_name)
         with open(dest, "wb") as fh:
@@ -99,6 +112,7 @@ def _extract_zip(content: bytes, scan_dir: str) -> StoredUpload:
     if total_uncompressed > _MAX_UNCOMPRESSED:
         raise UploadError("Zip archive uncompressed size exceeds limit (zip bomb?)")
 
+    source_exts = tuple(_source_extensions())
     for member in members:
         name = member.filename
         if member.is_dir():
@@ -106,8 +120,10 @@ def _extract_zip(content: bytes, scan_dir: str) -> StoredUpload:
         # Reject absolute paths and parent traversal explicitly.
         if name.startswith("/") or name.startswith("\\") or ".." in name.replace("\\", "/").split("/"):
             raise UploadError(f"Unsafe path in archive: {name}")
-        # Only extract python files.
-        if not name.lower().endswith(".py"):
+        # Only extract supported source files (.py/.js/.ts/.java/...).
+        # TypeScript declaration files carry no executable code.
+        low = name.lower()
+        if low.endswith(".d.ts") or not low.endswith(source_exts):
             continue
         # Zip Slip guard: resolved path must stay inside scan_dir.
         dest = _safe_join(scan_dir, name)
@@ -117,5 +133,5 @@ def _extract_zip(content: bytes, scan_dir: str) -> StoredUpload:
         stored.append(dest)
 
     if not stored:
-        raise UploadError("No .py files found in archive")
+        raise UploadError("No supported source files found in archive")
     return StoredUpload(scan_dir=scan_dir, files=stored)

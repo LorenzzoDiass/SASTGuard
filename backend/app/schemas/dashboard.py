@@ -38,3 +38,9 @@ class CriticalFile(BaseModel):
     critical: int
     high: int
     total: int
+
+
+class LanguageDistribution(BaseModel):
+    language: str
+    label: str
+    count: int

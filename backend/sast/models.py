@@ -43,6 +43,9 @@ class Finding:
     recommendation: str = ""
     engines: List[str] = field(default_factory=list)
     taint_path: Optional[List[TaintStep]] = None
+    # Source language of the finding: "python" | "javascript" | "typescript"
+    # | "java". Defaults to Python so every existing engine keeps its behaviour.
+    language: str = "python"
 
     def dedup_key(self) -> str:
         """Stable key used to merge the same vuln reported by multiple engines.

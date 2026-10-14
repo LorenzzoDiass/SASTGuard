@@ -43,6 +43,9 @@ class Finding(Base):
     # Ordered taint path steps when applicable
     taint_path: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
+    # Source language of the scanned file: python | javascript | typescript | java
+    language: Mapped[str] = mapped_column(String(20), default="python", nullable=False)
+
     status: Mapped[str] = mapped_column(String(30), default="OPEN", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 

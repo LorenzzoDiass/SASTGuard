@@ -27,7 +27,17 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 def init_db() -> None:
-    """Create all tables. Import models so they register on the metadata."""
+    """Create any MISSING tables for fresh databases (dev/SQLite/tests).
+
+    IMPORTANT: ``create_all`` only creates tables that do not yet exist. It does
+    NOT alter existing tables, so it will not add new columns (e.g.
+    ``findings.language``) to a database that was created by an earlier version.
+
+    For an existing/production database (PostgreSQL), schema changes MUST be
+    applied with the Alembic migrations in ``backend/migrations`` (``alembic
+    upgrade head``), which are non-destructive. This function remains for a
+    convenient first-run on a brand-new database and for the test suite.
+    """
     from app import models  # noqa: F401  (ensures models are imported)
 
     Base.metadata.create_all(bind=engine)

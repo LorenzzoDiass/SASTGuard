@@ -34,6 +34,7 @@ class FindingOut(BaseModel):
     recommendation: str
     engines: List[str] = []
     taint_path: Optional[List[TaintStepOut]] = None
+    language: str = "python"
     status: str
     created_at: datetime
     ai_analysis: Optional[AIAnalysisOut] = None

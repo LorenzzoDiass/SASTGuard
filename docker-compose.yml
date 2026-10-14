@@ -52,6 +52,13 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
       UPLOAD_DIR: /data/uploads
+      # Authentication
+      AUTH_ENABLED: ${AUTH_ENABLED:-true}
+      SECRET_KEY: ${SECRET_KEY:-dev-insecure-change-me}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
     volumes:
       - uploads:/data/uploads
       # Mount the sample project read-only so it can be scanned from the UI.
@@ -82,6 +89,10 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3}
       UPLOAD_DIR: /data/uploads
+      # The worker reuses the same image/config; auth is unused here (no HTTP)
+      # but SECRET_KEY/AUTH_ENABLED are passed for configuration consistency.
+      AUTH_ENABLED: ${AUTH_ENABLED:-true}
+      SECRET_KEY: ${SECRET_KEY:-dev-insecure-change-me}
     volumes:
       - uploads:/data/uploads
       - ./vulnerable_samples:/app/vulnerable_samples:ro

@@ -8,12 +8,14 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Q
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.repositories import ScanRepository
 from app.schemas import ScanCreate, ScanOut, ScanDetail, FindingOut
 from app.services.upload import store_upload, UploadError
 from app.workers.tasks import dispatch_scan
 
-router = APIRouter(prefix="/api/scans", tags=["scans"])
+router = APIRouter(prefix="/api/scans", tags=["scans"],
+                   dependencies=[Depends(get_current_user)])
 
 
 def _semgrep_rules_path() -> Optional[str]:

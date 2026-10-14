@@ -332,3 +332,30 @@ pre.code.plain { padding: 12px 14px; color: #a6d2ff; white-space: pre-wrap; }
   .kv { grid-template-columns: 1fr; gap: 4px 0; }
   .kv .k { margin-top: 8px; }
 }
+
+/* ---------------- Auth / Login ---------------- */
+.login-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(1200px 600px at 100% -10%, #13203100, #0e1621 60%),
+    var(--bg);
+}
+.login-card {
+  width: 100%; max-width: 380px; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 14px; padding: 28px 26px;
+  box-shadow: 0 20px 60px #00000055;
+}
+.login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.login-brand .logo { font-size: 30px; }
+.login-title { margin: 0; font-size: 22px; }
+.login-sub { margin: 4px 0 20px; color: var(--muted); font-size: 13px; }
+.login-card label { display: block; margin: 12px 0 6px; font-size: 13px; color: var(--muted); }
+.login-card input { width: 100%; }
+
+/* ---------------- Sidebar user / logout ---------------- */
+.sidebar-user { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: var(--text); }
+.sidebar-user .su-ico { opacity: .8; }
+.sidebar-user .su-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.logout-btn { width: 100%; justify-content: center; margin-bottom: 12px; }
+.sidebar-tag { font-size: 11px; color: var(--muted-2); }

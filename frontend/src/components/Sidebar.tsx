@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
 const links = [
   { to: "/", label: "Dashboard", icon: "📊", end: true },
@@ -10,6 +11,14 @@ const links = [
 ];
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
+  const nav = useNavigate();
+
+  function handleLogout() {
+    logout();
+    nav("/login", { replace: true });
+  }
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -33,7 +42,16 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="sidebar-foot">
-        SAST · Taint Analysis · DevSecOps
+        {user && (
+          <div className="sidebar-user">
+            <span className="su-ico" aria-hidden="true">👤</span>
+            <span className="su-name" title={user.username}>{user.username}</span>
+          </div>
+        )}
+        <button className="btn secondary logout-btn" onClick={handleLogout} type="button">
+          Sair
+        </button>
+        <div className="sidebar-tag">SAST · Taint Analysis · DevSecOps</div>
       </div>
     </aside>
   );

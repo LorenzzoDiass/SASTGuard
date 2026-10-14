@@ -58,6 +58,7 @@ export default function FindingModal({
             <div className="tags">
               <Badge value={current.severity} kind="severity" />
               <span className="chip"><b>{current.rule_id}</b></span>
+              {current.language && <span className="chip">Linguagem: <b>{current.language}</b></span>}
               {current.engines.map((e) => <span key={e} className="chip">Engine: <b>{e}</b></span>)}
             </div>
           </div>

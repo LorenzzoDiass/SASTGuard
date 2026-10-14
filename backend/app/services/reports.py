@@ -61,6 +61,7 @@ def to_html(findings: List[Finding], meta: Dict = None) -> str:
             f"<td>{_esc(f.rule_id)}</td>"
             f"<td>{_esc(f.title)}</td>"
             f"<td>{_esc(f.file_path)}:{f.line}</td>"
+            f"<td>{_esc(getattr(f, 'language', 'python'))}</td>"
             f"<td>{_esc(f.cwe or '')}</td>"
             f"<td>{_esc('+'.join(f.engines))}</td>"
             f"<td><code>{_esc(f.code_snippet)}</code>{taint}</td>"
@@ -90,7 +91,7 @@ def to_html(findings: List[Finding], meta: Dict = None) -> str:
  Total findings: {len(findings)}</div></header>
 <div class="cards">{cards}</div>
 <table><thead><tr><th>Severity</th><th>Rule</th><th>Vulnerability</th><th>File:Line</th>
-<th>CWE</th><th>Engine</th><th>Code / Taint path</th></tr></thead>
+<th>Language</th><th>CWE</th><th>Engine</th><th>Code / Taint path</th></tr></thead>
 <tbody>{''.join(rows)}</tbody></table>
 </body></html>"""
 
@@ -132,6 +133,7 @@ def to_sarif(findings: List[Finding], meta: Dict = None) -> str:
                 "confidence": f.confidence,
                 "engines": f.engines,
                 "cwe": f.cwe,
+                "language": getattr(f, "language", "python"),
             },
         })
 

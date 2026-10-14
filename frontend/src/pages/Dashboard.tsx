@@ -6,7 +6,8 @@ import {
 } from "recharts";
 import { api } from "../services/api";
 import type {
-  DashboardSummary, SeverityDistribution, TrendPoint, CriticalFile, Scan,
+  DashboardSummary, SeverityDistribution, TrendPoint, CriticalFile,
+  LanguageDistribution, Scan,
 } from "../types";
 import { Badge } from "../components/Badge";
 
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [severity, setSeverity] = useState<SeverityDistribution[]>([]);
   const [trends, setTrends] = useState<TrendPoint[]>([]);
   const [critFiles, setCritFiles] = useState<CriticalFile[]>([]);
+  const [languages, setLanguages] = useState<LanguageDistribution[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,10 +34,12 @@ export default function Dashboard() {
       api.dashboardSeverity(),
       api.dashboardTrends(),
       api.dashboardCriticalFiles(),
+      api.dashboardLanguages(),
       api.listScans(),
     ])
-      .then(([s, sev, tr, cf, sc]) => {
-        setSummary(s); setSeverity(sev); setTrends(tr); setCritFiles(cf); setScans(sc.slice(0, 5));
+      .then(([s, sev, tr, cf, langs, sc]) => {
+        setSummary(s); setSeverity(sev); setTrends(tr); setCritFiles(cf);
+        setLanguages(langs); setScans(sc.slice(0, 5));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -151,6 +155,25 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+
+          {languages.length > 0 && (
+            <div className="panel">
+              <h3><span className="h-accent" />Vulnerabilidades por Linguagem</h3>
+              <div className="table-wrap compact">
+                <table>
+                  <thead><tr><th>Linguagem</th><th>Findings</th></tr></thead>
+                  <tbody>
+                    {languages.map((l) => (
+                      <tr key={l.language}>
+                        <td>{l.label}</td>
+                        <td className="num">{l.count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

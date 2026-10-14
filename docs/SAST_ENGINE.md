@@ -3,6 +3,11 @@
 The engine analyzes Python **statically** (via the standard `ast` module) and
 combines three sources of findings into one normalized, deduplicated result set.
 
+> **JavaScript, TypeScript and Java** are analysed by dedicated Tree-sitter
+> scanners that feed the same `Finding` model, deduplication and Security Gate
+> described here. The native Python pipeline below is unchanged. See
+> [`MULTILANG_SAST.md`](./MULTILANG_SAST.md).
+
 ## Pipeline
 
 ```mermaid

@@ -5,12 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.repositories import ScanRepository
 from app.models import SecurityGateResult
 from app.schemas import GateEvaluateRequest, GateResultOut
 from app.services.security_gate import evaluate_gate, GatePolicy
 
-router = APIRouter(prefix="/api/security-gate", tags=["security-gate"])
+router = APIRouter(prefix="/api/security-gate", tags=["security-gate"],
+                   dependencies=[Depends(get_current_user)])
 
 
 @router.post("/evaluate", response_model=GateResultOut)

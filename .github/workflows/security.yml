@@ -1,5 +1,4 @@
-
-name: SASTGuard Security Pipeline
+name: SASTGuard CI
 
 on:
   push:
@@ -13,10 +12,14 @@ permissions:
   security-events: write
 
 jobs:
-  security:
-    name: Tests + SAST + Security Gate
+  # ------------------------------------------------------------------
+  # 1) Backend tests: auth + Python/JavaScript/Java scanners.
+  #    Must PASS. Tree-sitter (JS/Java) and auth deps are installed here, so
+  #    the JS/Java scanner tests and auth tests actually run (not skipped).
+  # ------------------------------------------------------------------
+  backend-tests:
+    name: Backend tests (auth + Py/JS/Java scanners)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,13 +36,72 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-sast.txt
 
-      - name: Run tests
+      - name: Run test suite
         working-directory: backend
+        env:
+          # Domain/API tests run with auth off; the dedicated auth test module
+          # enables auth per-test to validate login/protection/logout. The
+          # throwaway secret only signs test JWTs (never a real secret).
+          APP_ENV: test
+          AUTH_ENABLED: "false"
+          SECRET_KEY: "ci-test-secret-not-used-in-production"
         run: pytest -q
+
+  # ------------------------------------------------------------------
+  # 2) Frontend build: typecheck + production build of the React dashboard.
+  #    Must PASS.
+  # ------------------------------------------------------------------
+  frontend-build:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build (tsc + vite)
+        working-directory: frontend
+        run: npm run build
+
+  # ------------------------------------------------------------------
+  # 3) Security Gate (SAST): runs SASTGuard's own engine over the bundled
+  #    vulnerable samples. This step INTENTIONALLY fails because the samples
+  #    contain real vulnerabilities. Kept in its OWN job so a gate failure
+  #    does not hide test/build results, and uploads SARIF to code scanning.
+  # ------------------------------------------------------------------
+  security-gate:
+    name: Security Gate (intentional fail on vulnerable samples)
+    runs-on: ubuntu-latest
+    # Run regardless of whether other jobs pass, but it is independent.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-sast.txt
 
       - name: Run SASTGuard scan + generate reports
         id: scan
         working-directory: backend
+        env:
+          AUTH_ENABLED: "false"   # CLI does not use HTTP; keep it explicit
         run: |
           set +e
           python -m app.cli scan ../vulnerable_samples \
@@ -73,5 +135,6 @@ jobs:
       - name: Enforce Security Gate
         if: always() && steps.scan.outputs.gate_exit != '0'
         run: |
-          echo "::error::Security Gate failed (exit ${{ steps.scan.outputs.gate_exit }})"
+          echo "::error::Security Gate failed (exit ${{ steps.scan.outputs.gate_exit }}) \
+            — expected on the bundled vulnerable samples."
           exit 1
