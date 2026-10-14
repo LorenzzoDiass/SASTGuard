@@ -34,9 +34,31 @@ class DashboardService:
             for s in Severity
         ]
 
+    def language_distribution(self) -> List[dict]:
+        """Finding counts per source language (python/javascript/typescript/java)."""
+        totals = self.repo.language_totals()
+        # Stable, friendly ordering with human labels.
+        order = [
+            ("python", "Python"),
+            ("javascript", "JavaScript"),
+            ("typescript", "TypeScript"),
+            ("java", "Java"),
+        ]
+        result = [
+            {"language": key, "label": label, "count": totals.get(key, 0)}
+            for key, label in order
+            if totals.get(key, 0) > 0
+        ]
+        # Include any other languages not in the known list.
+        known = {k for k, _ in order}
+        for lang, count in totals.items():
+            if lang not in known and count > 0:
+                result.append({"language": lang, "label": lang, "count": count})
+        return result
+
     def trends(self, limit: int = 10) -> List[dict]:
         """Per-scan severity breakdown for the trend chart (most recent first)."""
-        scans = self.repo.list_scans(limit=limit)
+        scans = self.repo.list_scans_with_findings(limit=limit)
         points: List[dict] = []
         for scan in scans:
             counts = {s.value: 0 for s in Severity}

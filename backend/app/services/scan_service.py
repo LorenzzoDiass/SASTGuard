@@ -39,6 +39,7 @@ def _to_model(scan_id: str, f) -> FindingModel:
         recommendation=f.recommendation,
         engines=list(f.engines),
         taint_path=taint,
+        language=getattr(f, "language", "python"),
     )
 
 

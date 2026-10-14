@@ -10,6 +10,12 @@ if os.path.exists(_TEST_DB):
     os.remove(_TEST_DB)
 os.environ.setdefault("DATABASE_URL", f"sqlite:///{_TEST_DB.replace(os.sep, '/')}")
 
+# The API-level tests exercise the endpoints' domain behaviour, not auth. Default
+# the test session to auth-disabled so those tests keep hitting the API directly.
+# The dedicated auth test module overrides this per-test to validate the real
+# JWT flow (login/protection/logout).
+os.environ.setdefault("AUTH_ENABLED", "false")
+
 import pytest
 
 # Ensure the backend package root is importable when running pytest from repo root.

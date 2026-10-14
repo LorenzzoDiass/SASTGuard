@@ -7,10 +7,15 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas import DashboardSummary, SeverityDistribution, TrendPoint, CriticalFile
+from app.core.deps import get_current_user
+from app.schemas import (
+    DashboardSummary, SeverityDistribution, TrendPoint, CriticalFile,
+    LanguageDistribution,
+)
 from app.services.dashboard_service import DashboardService
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/api/dashboard", tags=["dashboard"],
+                   dependencies=[Depends(get_current_user)])
 
 
 @router.get("/summary", response_model=DashboardSummary)
@@ -32,3 +37,8 @@ def trends(limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)) -
 def critical_files(limit: int = Query(5, ge=1, le=20),
                    db: Session = Depends(get_db)) -> List[CriticalFile]:
     return [CriticalFile(**c) for c in DashboardService(db).critical_files(limit=limit)]
+
+
+@router.get("/languages", response_model=List[LanguageDistribution])
+def languages(db: Session = Depends(get_db)) -> List[LanguageDistribution]:
+    return [LanguageDistribution(**d) for d in DashboardService(db).language_distribution()]

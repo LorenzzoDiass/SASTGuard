@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session
 
 from ai.analyzer import AIAnalyzer
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.repositories import ScanRepository
 from app.schemas import FindingOut
 
-router = APIRouter(prefix="/api/findings", tags=["findings"])
+router = APIRouter(prefix="/api/findings", tags=["findings"],
+                   dependencies=[Depends(get_current_user)])
 
 
 @router.get("/{finding_id}", response_model=FindingOut)

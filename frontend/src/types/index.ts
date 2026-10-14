@@ -42,6 +42,7 @@ export interface Finding {
   recommendation: string;
   engines: string[];
   taint_path: TaintStep[] | null;
+  language?: string;
   status: string;
   created_at: string;
   ai_analysis: AIAnalysis | null;
@@ -97,6 +98,12 @@ export interface CriticalFile {
   total: number;
 }
 
+export interface LanguageDistribution {
+  language: string;
+  label: string;
+  count: number;
+}
+
 export interface GateResult {
   status: GateStatus;
   critical: number;
@@ -105,4 +112,18 @@ export interface GateResult {
   low: number;
   info: number;
   reasons: string[];
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  is_admin: boolean;
+  is_active: boolean;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user: AuthUser;
 }

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import NewScan from "./pages/NewScan";
@@ -6,8 +6,10 @@ import Scans from "./pages/Scans";
 import Findings from "./pages/Findings";
 import SecurityGate from "./pages/SecurityGate";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import ProtectedRoute from "./auth/ProtectedRoute";
 
-export default function App() {
+function AppLayout() {
   return (
     <div className="layout">
       <Sidebar />
@@ -20,8 +22,25 @@ export default function App() {
           <Route path="/findings" element={<Findings />} />
           <Route path="/security-gate" element={<SecurityGate />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }

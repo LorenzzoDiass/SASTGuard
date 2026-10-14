@@ -21,7 +21,7 @@ export default function NewScan() {
         : file
           ? await api.uploadScan(projectName, file, runAi)
           : null;
-      if (!scan) { setError("Selecione um arquivo .py ou .zip para enviar."); setBusy(false); return; }
+      if (!scan) { setError("Selecione um arquivo de código (.py, .js, .ts, .java) ou .zip para enviar."); setBusy(false); return; }
       nav(`/scans/${scan.id}`);
     } catch (e) {
       setError(`Não foi possível concluir a análise: ${(e as Error).message}`);
@@ -59,9 +59,10 @@ export default function NewScan() {
         ) : (
           <>
             <label htmlFor="sfile">Arquivo do projeto</label>
-            <input id="sfile" type="file" accept=".py,.zip"
+            <input id="sfile" type="file" accept=".py,.js,.jsx,.mjs,.cjs,.ts,.tsx,.java,.zip"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            <p className="help">Envie um arquivo Python (.py) ou um projeto compactado (.zip).</p>
+            <p className="help">Envie um arquivo Python (.py), JavaScript/TypeScript (.js/.ts),
+              Java (.java) ou um projeto compactado (.zip).</p>
           </>
         )}
 

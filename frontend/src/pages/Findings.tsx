@@ -94,12 +94,12 @@ export default function Findings() {
               <thead>
                 <tr>
                   <th>Severity</th><th>Vulnerabilidade</th><th>Arquivo</th><th>Linha</th>
-                  <th>CWE</th><th>Engine</th>
+                  <th>Linguagem</th><th>CWE</th><th>Engine</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.length === 0 && (
-                  <tr><td colSpan={6} className="empty">
+                  <tr><td colSpan={7} className="empty">
                     {findings.length === 0 ? "Nenhuma vulnerabilidade nesta análise." : "Nenhum finding corresponde aos filtros."}
                   </td></tr>
                 )}
@@ -109,6 +109,7 @@ export default function Findings() {
                     <td>{f.title}</td>
                     <td className="mono">{f.file_path}</td>
                     <td className="num">{f.line}</td>
+                    <td>{f.language ?? "python"}</td>
                     <td>{f.cwe ?? "-"}</td>
                     <td>{f.engines.join(" + ")}</td>
                   </tr>

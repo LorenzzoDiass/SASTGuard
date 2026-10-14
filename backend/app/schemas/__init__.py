@@ -7,6 +7,7 @@ from app.schemas.dashboard import (
     SeverityDistribution,
     TrendPoint,
     CriticalFile,
+    LanguageDistribution,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "SeverityDistribution",
     "TrendPoint",
     "CriticalFile",
+    "LanguageDistribution",
 ]

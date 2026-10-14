@@ -44,6 +44,21 @@ class ScanRepository:
         )
         return list(self.db.execute(stmt).scalars().all())
 
+    def list_scans_with_findings(self, limit: int = 50, offset: int = 0) -> List[Scan]:
+        """Like :meth:`list_scans` but eager-loads findings in one query.
+
+        Used by dashboard trends to avoid an N+1 (one extra query per scan when
+        counting severities).
+        """
+        stmt = (
+            select(Scan)
+            .order_by(Scan.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .options(selectinload(Scan.findings))
+        )
+        return list(self.db.execute(stmt).scalars().all())
+
     def update_status(self, scan: Scan, status: ScanStatus,
                       error_message: Optional[str] = None) -> Scan:
         scan.status = status.value
@@ -125,6 +140,12 @@ class ScanRepository:
         stmt = select(Finding.severity, func.count(Finding.id)).group_by(Finding.severity)
         rows = self.db.execute(stmt).all()
         return {sev: count for sev, count in rows}
+
+    def language_totals(self) -> dict:
+        """Count findings grouped by source language (single grouped query)."""
+        stmt = select(Finding.language, func.count(Finding.id)).group_by(Finding.language)
+        rows = self.db.execute(stmt).all()
+        return {(lang or "python"): count for lang, count in rows}
 
     def latest_scan(self) -> Optional[Scan]:
         stmt = select(Scan).order_by(Scan.created_at.desc()).limit(1)

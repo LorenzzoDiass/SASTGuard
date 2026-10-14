@@ -2,3 +2,12 @@
 # Not installed in the local Windows venv by default (see README).
 bandit==1.7.8
 semgrep==1.63.0
+
+# Tree-sitter multi-language parsing for the JavaScript and Java scanners.
+# tree-sitter is the core runtime; tree-sitter-language-pack ships prebuilt
+# grammar binaries (incl. JavaScript, TypeScript, TSX and Java) as manylinux /
+# macos / Windows wheels, so no C toolchain is required at install time.
+# These are installed in CI / Docker only; the scanners degrade gracefully
+# (available() == False) when the libraries are absent.
+tree-sitter==0.23.2
+tree-sitter-language-pack==0.7.2
